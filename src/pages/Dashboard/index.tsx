@@ -27,7 +27,7 @@ const Dashboard: React.FC = () => {
 
   useEffect(() => {
     async function loadFoods(): Promise<void> {
-      // TODO LOAD FOODS
+      api.get('/foods').then(response => setFoods(response.data));
     }
 
     loadFoods();
@@ -37,7 +37,19 @@ const Dashboard: React.FC = () => {
     food: Omit<IFoodPlate, 'id' | 'available'>,
   ): Promise<void> {
     try {
-      // TODO ADD A NEW FOOD PLATE TO THE API
+      const { name, image, price, description } = food;
+
+      const postFood = await api.post<IFoodPlate>('/foods', {
+        name,
+        image,
+        price,
+        description,
+        available: true,
+      });
+
+      const newFood = [...foods, postFood.data];
+
+      setFoods(newFood);
     } catch (err) {
       console.log(err);
     }
@@ -46,11 +58,27 @@ const Dashboard: React.FC = () => {
   async function handleUpdateFood(
     food: Omit<IFoodPlate, 'id' | 'available'>,
   ): Promise<void> {
-    // TODO UPDATE A FOOD PLATE ON THE API
+    const { description, image, name, price } = food;
+    const { id, available } = editingFood;
+
+    const valor = await api.put(`foods/${id}`, {
+      id,
+      available,
+      description,
+      image,
+      name,
+      price,
+    });
+
+    setFoods(
+      foods.map(mapFood => (mapFood.id === id ? { ...valor.data } : mapFood)),
+    );
   }
 
   async function handleDeleteFood(id: number): Promise<void> {
-    // TODO DELETE A FOOD PLATE FROM THE API
+    await api.delete(`foods/${id}`);
+
+    setFoods(foods.filter(food => food.id !== id));
   }
 
   function toggleModal(): void {
@@ -62,7 +90,7 @@ const Dashboard: React.FC = () => {
   }
 
   function handleEditFood(food: IFoodPlate): void {
-    // TODO SET THE CURRENT EDITING FOOD ID IN THE STATE
+    setEditingFood(food);
   }
 
   return (
@@ -88,6 +116,7 @@ const Dashboard: React.FC = () => {
               food={food}
               handleDelete={handleDeleteFood}
               handleEditFood={handleEditFood}
+              openEditModal={toggleEditModal}
             />
           ))}
       </FoodsContainer>
